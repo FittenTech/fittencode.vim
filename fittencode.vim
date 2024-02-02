@@ -1,14 +1,24 @@
 " plugin name: Fitten Code vim
-" plugin version: 0.1.0 
+" plugin version: 0.2.0 
 
 if exists("g:loaded_fittencode")
-  finish
-endif
+    finish
+  endif
 let g:loaded_fittencode = 1
 
-function! Fittenlogin(lgstring, password2)
+let s:hlgroup = 'FittenSuggestion'
+function! SetSuggestionStyle() abort
+    if &t_Co == 256
+        hi def FittenSuggestion guifg=#808080 ctermfg=244
+    else
+        hi def FittenSuggestion guifg=#808080 ctermfg=8
+    endif
+    call prop_type_add(s:hlgroup, {'highlight': s:hlgroup})
+endfunction
+
+function! Fittenlogin(account, password)
     let l:login_url = 'https://codeuser.fittentech.cn:14443/login'
-    let l:json_data = '{"username": "' . a:lgstring . '", "password": "' . a:password2 . '"}'
+    let l:json_data = '{"username": "' . a:account . '", "password": "' . a:password . '"}'
     let l:login_command = 'curl -s -X POST -H "Content-Type: application/json" -d ' . shellescape(l:json_data) . ' ' . l:login_url
     let l:response = system(l:login_command)
     let l:login_data = json_decode(l:response)
@@ -58,16 +68,36 @@ function! CheckLoginStatus()
     endif
 endfunction
 
+function! ClearCompletion()
+    unlet! b:fitten_suggestion
+    call prop_remove({'type': s:hlgroup, 'all': v:true})
+endfunction
+
+function! ClearCompletionByCursorMoved()
+    if col('.') != col('$')
+        call ClearCompletion()
+    endif
+endfunction
+
 function! CodeCompletion()
+    call ClearCompletion()
+
     let l:filename = expand('%')
 
     let l:file_content = join(getline(1, '$'), "\n")
     let l:line_num = line('.')
-    let l:col_num = col('.')
-
-    let l:prefix = join(getline(1, l:line_num - 1), '\n') . '\n' . strpart(getline(l:line_num), 0, l:col_num)
+    let l:col_num = getcurpos()[4]
     
-    let l:suffix = strpart(getline(l:line_num), l:col_num) . '\n' . join(getline(l:line_num + 1, '$'), '\n')
+    let l:prefix = join(getline(1, l:line_num - 1), '\n')
+    if !empty(l:prefix)
+        let l:prefix = l:prefix . '\n'
+    endif
+    let l:prefix = l:prefix . strpart(getline(l:line_num), 0, l:col_num - 1)
+    
+    let l:suffix = strpart(getline(l:line_num), l:col_num - 1)
+    if l:line_num < line('$')
+        let l:suffix = l:suffix . '\n' . join(getline(l:line_num + 1, '$'), '\n')
+    endif
 
     let l:prompt = "!FCPREFIX!" . l:prefix . "!FCSUFFIX!" . l:suffix . "!FCMIDDLE!"
     let l:escaped_prompt = escape(l:prompt, '\"')
@@ -84,42 +114,72 @@ function! CodeCompletion()
 
     let l:cmd = 'curl -s -X POST -H "Content-Type: application/json" -d @' . l:tempfile . ' "' . l:server_addr . l:token . '?ide=vim&v=0.1.0"'
     let l:response = system(l:cmd)
-    " echo l:cmd
 
     if v:shell_error
-        echo "Request failed"
-        " echo l:cmd
+        echow "Request failed"
         return
     endif
     let l:completion_data = json_decode(l:response)
 
     call delete(l:tempfile)
 
-    " TODO: 显示代码补全建议和用户交互
-    " echo l:completion_data
-
-    " get generated_text from completion_data
     let l:generated_text = l:completion_data.generated_text
-
-    " replace <|endoftext|> to empty
     let l:generated_text = substitute(l:generated_text, '<.endoftext.>', '', 'g')
-    " echo l:generated_text
-    
-    " echo l:generated_text
 
-    let l:save_ai = &autoindent
-    let l:save_cin = &cindent
-    let l:save_si = &smartindent
-    let l:save_paste = &paste
+    if empty(l:generated_text)
+        echow "Fitten Code: No More Suggestions"
+        call timer_start(2000, {-> execute('echo ""')})
+        return
+    endif
 
-    set noautoindent nocindent nosmartindent paste
+    let l:text = split(l:generated_text, "\n", 1)
+    if empty(l:text[-1])
+        call remove(l:text, -1)
+    endif
 
-    execute "normal! a" . l:generated_text
-    
-    let &autoindent = l:save_ai
-    let &cindent = l:save_cin
-    let &smartindent = l:save_si
-    let &paste = l:save_paste
+    let l:is_first_line = v:true
+    for line in text
+        if empty(line)
+            let line = " "
+        endif
+        if l:is_first_line is v:true
+            let l:is_first_line = v:false
+            call prop_add(line('.'), l:col_num, {'type': s:hlgroup, 'text': line})
+        else
+            call prop_add(line('.'), 0, {'type': s:hlgroup, 'text_align': 'below', 'text': line})
+        endif
+    endfor
+
+    let b:fitten_suggestion = l:generated_text
 endfunction
 
-inoremap <C-l> <C-O>:call CodeCompletion()<CR>
+function! Accept()
+    echo "Accept"
+    let default = pumvisible() ? "\<C-N>" : "\t"
+
+    if mode() !~# '^[iR]' || !exists('b:fitten_suggestion')
+        return default
+    endif
+
+    let l:text = b:fitten_suggestion
+
+    call ClearCompletion()
+
+    return l:text
+endfunction
+
+function! MapTab()
+    inoremap <C-l> <C-O>:call CodeCompletion()<CR>
+    inoremap <script><silent><nowait><expr> <Tab> Accept()
+endfunction
+
+augroup fittencode
+    autocmd!
+    autocmd CursorMovedI * call ClearCompletionByCursorMoved()
+    autocmd InsertLeave  * call ClearCompletion()
+    autocmd BufLeave     * call ClearCompletion()
+    autocmd ColorScheme,VimEnter * call SetSuggestionStyle()
+    " Map tab using vim enter so it occurs after all other sourcing.
+    autocmd VimEnter             * call MapTab()
+augroup END
+

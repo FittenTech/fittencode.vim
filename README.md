@@ -24,11 +24,11 @@ curl -o ~/.vim/plugin/fittencode.vim https://gitee.com/fittentech/fittentech.vim
 
 If you haven't registered yet, please click [here](https://codewebchat.fittentech.cn:15443?ide=vim) to register.
 
-After registration, enter `:Fittenlogin <username> <passwd>` in vim command line to login. After successful login, press <C-l> for completion. You can also modify the shortcut key binding in the fittencode.vim file to your preferred completion shortcut.
+After registration, enter `:Fittenlogin <username> <passwd>` in vim command line to login. After successful login, press `<C-l>` to toggle completion and `<TAB>` to accept the completion. You can also modify the shortcut key binding in the fittencode.vim file to your preferred completion shortcut.
 
 如果您还没注册，请先点击[这里](https://codewebchat.fittentech.cn:15443?ide=vim)注册。
 
-注册完成后，在vim命令行输入`:Fittenlogin <username> <passwd>`登录，登录成功后，按下`<C-l>`即可进行补全，您也可以修改`fittencode.vim`文件的快捷键绑定，改为自己习惯的补全快捷键。
+注册完成后，在vim命令行输入`:Fittenlogin <username> <passwd>`登录；登录成功后，按下`<C-l>`即可弹出补全提示，按下 `<TAB>` 键完成补全，您也可以修改`fittencode.vim`文件的快捷键绑定，改为自己习惯的补全快捷键。
 
 ```python
 # Intelligent completion example for input code
