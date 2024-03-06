@@ -1,5 +1,5 @@
 " plugin name: Fitten Code vim
-" plugin version: 0.2.0 
+" plugin version: 0.2.1
 
 if exists("g:loaded_fittencode")
     finish
@@ -86,7 +86,11 @@ function! CodeCompletion()
 
     let l:file_content = join(getline(1, '$'), "\n")
     let l:line_num = line('.')
-    let l:col_num = getcurpos()[4]
+    if getcurpos()[2] == getcurpos()[4]
+        let l:col_num = getcurpos()[2]
+    else
+        let l:col_num = getcurpos()[2] + 1
+    endif
     
     let l:prefix = join(getline(1, l:line_num - 1), '\n')
     if !empty(l:prefix)
@@ -103,6 +107,8 @@ function! CodeCompletion()
     let l:escaped_prompt = escape(l:prompt, '\"')
     " replace \\n to \n
     let l:escaped_prompt = substitute(l:escaped_prompt, '\\\\n', '\\n', 'g')
+    " replace \\t to \t
+    let l:escaped_prompt = substitute(l:escaped_prompt, '\t', '\\t', 'g')
     let l:token = join(readfile($HOME . '/.vimapikey'), "\n")
 
     let l:params = '{"inputs": "' . l:escaped_prompt . '", "meta_datas": {"filename": "' . l:filename . '"}}'
@@ -112,7 +118,7 @@ function! CodeCompletion()
 
     let l:server_addr = 'https://codeapi.fittentech.cn:13443/generate_one_stage/'
 
-    let l:cmd = 'curl -s -X POST -H "Content-Type: application/json" -d @' . l:tempfile . ' "' . l:server_addr . l:token . '?ide=vim&v=0.1.0"'
+    let l:cmd = 'curl -s -X POST -H "Content-Type: application/json" -d @' . l:tempfile . ' "' . l:server_addr . l:token . '?ide=vim&v=0.2.1"'
     let l:response = system(l:cmd)
 
     if v:shell_error
