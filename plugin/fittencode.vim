@@ -82,7 +82,7 @@ endfunction
 function! CodeCompletion()
     call ClearCompletion()
 
-    let l:filename = expand('%')
+    let l:filename = substitute(expand('%'), '\\', '/', 'g')
 
     let l:file_content = join(getline(1, '$'), "\n")
     let l:line_num = line('.')
@@ -128,6 +128,10 @@ function! CodeCompletion()
     let l:completion_data = json_decode(l:response)
 
     call delete(l:tempfile)
+
+    if !has_key(l:completion_data, 'generated_text')
+        return
+    endif
 
     let l:generated_text = l:completion_data.generated_text
     let l:generated_text = substitute(l:generated_text, '<.endoftext.>', '', 'g')
