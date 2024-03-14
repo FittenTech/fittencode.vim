@@ -12,11 +12,11 @@ Fitten Code AI编程助手 Vim 版本，帮助您在vim中通过AI进行自动�
 
 # github install
 mkdir -p ~/.vim/plugin
-curl -o ~/.vim/plugin/fittencode.vim https://raw.githubusercontent.com/fittentech/fittencode.vim/master/fittencode.vim
+curl -o ~/.vim/plugin/fittencode.vim https://raw.githubusercontent.com/fittentech/fittencode.vim/master/plugin/fittencode.vim
 
 # gitee install 
 mkdir -p ~/.vim/plugin
-curl -o ~/.vim/plugin/fittencode.vim https://gitee.com/fittentech/fittentech.vim/raw/master/fittencode.vim
+curl -o ~/.vim/plugin/fittencode.vim https://gitee.com/fittentech/fittentech.vim/raw/master/plugin/fittencode.vim
 
 ```
 
