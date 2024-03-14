@@ -129,6 +129,10 @@ function! CodeCompletion()
 
     call delete(l:tempfile)
 
+    if !has_key(l:completion_data, 'generated_text')
+        return
+    endif
+
     let l:generated_text = l:completion_data.generated_text
     let l:generated_text = substitute(l:generated_text, '<.endoftext.>', '', 'g')
 
