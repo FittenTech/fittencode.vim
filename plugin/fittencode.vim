@@ -82,7 +82,7 @@ endfunction
 function! CodeCompletion()
     call ClearCompletion()
 
-    let l:filename = expand('%')
+    let l:filename = substitute(expand('%'), '\\', '/', 'g')
 
     let l:file_content = join(getline(1, '$'), "\n")
     let l:line_num = line('.')
