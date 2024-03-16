@@ -121,13 +121,13 @@ function! CodeCompletion()
     let l:cmd = 'curl -s -X POST -H "Content-Type: application/json" -d @' . l:tempfile . ' "' . l:server_addr . l:token . '?ide=vim&v=0.2.1"'
     let l:response = system(l:cmd)
 
+    call delete(l:tempfile)
+
     if v:shell_error
         echow "Request failed"
         return
     endif
     let l:completion_data = json_decode(l:response)
-
-    call delete(l:tempfile)
 
     if !has_key(l:completion_data, 'generated_text')
         return
