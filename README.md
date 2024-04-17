@@ -6,6 +6,9 @@ Fitten Code AI编程助手 Vim 版本，帮助您在vim中通过AI进行自动�
 
 ![img](./vim.gif)
 
+## Depencence
+`Vim` > 9.0, that means `neovim` is not support yet.
+
 ## Install
 
 ```bash
