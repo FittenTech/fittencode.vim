@@ -1,0 +1,46 @@
+*fittencode.vim.txt*    Fitten Code AI Programming Assistant
+
+==============================================================================
+CONTENTS
+
+    Basic Options                               |fitten-options|
+    Advanced Usage                              |fitten-advanced|
+
+==============================================================================
+BASIC OPTIONS                                   *fitten-options*
+
+*g:fitten_accept_no_echo*
+    Set to 1 to disable "Accept" echoing from suggestion acception
+
+    Default value: `0`
+
+*g:fitten_trigger*
+    The key bindings to trigger code completion, i.e., the key sequence
+    `{lhs}` of the mapping to |CodeCompletion()|.
+
+    Default value: `'<C-l>'`
+
+*g:fitten_accept_key*
+    The key bindings to accept code completion, i.e., the key sequence `{lhs}`
+    of the mapping to |FittenAccept()|.
+
+    Set to |v:none| to disable the mapping.
+
+    Default value: `'<Tab>'`
+
+==============================================================================
+ADVANCED USAGE                                  *fitten-advanced*
+
+For advanced users there are functions that you can use in your own mappings:
+
+FittenAcceptable()                              *FittenAcceptable()*
+    Checks if the suggestion can be accepted. i.e., function |FittenAccept()|
+    would accept the suggestion.
+
+    Return value: 0 or 1.
+
+FittenAccept()                                  *FittenAccept()*
+    Accept the suggestion.
+
+==============================================================================
+ vim:tw=78:ft=help:norl:

@@ -163,8 +163,11 @@ function! CodeCompletion()
     let b:fitten_suggestion = l:generated_text
 endfunction
 
-function! Accept()
-    echo "Accept"
+let g:fitten_accept_no_echo = 0
+function! FittenAcceptMain()
+    if g:fitten_accept_no_echo == 0
+        echo "Accept"
+    endif
     let default = pumvisible() ? "\<C-N>" : "\t"
 
     if mode() !~# '^[iR]' || !exists('b:fitten_suggestion')
@@ -178,9 +181,30 @@ function! Accept()
     return l:text
 endfunction
 
-function! MapTab()
-    inoremap <C-l> <C-O>:call CodeCompletion()<CR>
-    inoremap <script><silent><nowait><expr> <Tab> Accept()
+function FittenAccept()
+    let l:oldval = &paste
+    set paste
+    execute "normal i" . FittenAcceptMain()
+    let &paste = l:oldval
+    unl oldval
+    return ""
+endfunction
+
+function! FittenAcceptable()
+    return (mode() !~# '^[iR]' || !exists('b:fitten_suggestion')) ? 0 : 1
+endfunction
+
+if !exists('g:fitten_trigger')
+    let g:fitten_trigger = '<C-l>'
+endif
+if !exists('g:fitten_accept_key')
+    let g:fitten_accept_key = '<Tab>'
+endif
+function! FittenMapping()
+    execute "inoremap" g:fitten_trigger '<Cmd>call CodeCompletion()<CR>'
+    if g:fitten_accept_key isnot v:none
+        execute 'inoremap' g:fitten_accept_key '<C-r>=FittenAccept()<CR>'
+    endif
 endfunction
 
 augroup fittencode
@@ -190,6 +214,6 @@ augroup fittencode
     autocmd BufLeave     * call ClearCompletion()
     autocmd ColorScheme,VimEnter * call SetSuggestionStyle()
     " Map tab using vim enter so it occurs after all other sourcing.
-    autocmd VimEnter             * call MapTab()
+    autocmd VimEnter             * call FittenMapping()
 augroup END
 
