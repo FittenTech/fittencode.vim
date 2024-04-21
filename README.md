@@ -6,6 +6,12 @@ Fitten Code AI编程助手 Vim 版本，帮助您在vim中通过AI进行自动�
 
 ![img](./vim.gif)
 
+## Dependencies
+
+`Vim` >= 9.0.
+
+The support of `NeoVim` is [here](https://github.com/luozhiya/fittencode.nvim) contributed by luozhiya.
+
 ## Install
 
 ```bash
