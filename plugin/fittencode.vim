@@ -163,15 +163,12 @@ function! CodeCompletion()
     let b:fitten_suggestion = l:generated_text
 endfunction
 
-let g:fitten_accept_no_echo = 0
 function! FittenAcceptMain()
-    if g:fitten_accept_no_echo == 0
-        echo "Accept"
-    endif
+    echo "Accept"
     let default = pumvisible() ? "\<C-N>" : "\t"
 
     if mode() !~# '^[iR]' || !exists('b:fitten_suggestion')
-        return default
+        return g:fitten_accept_key == "\t" ? default : g:fitten_accept_key
     endif
 
     let l:text = b:fitten_suggestion
@@ -183,10 +180,15 @@ endfunction
 
 function FittenAccept()
     let l:oldval = &paste
+
     set paste
+
     execute "normal i" . FittenAcceptMain()
+
     let &paste = l:oldval
+
     unl oldval
+
     return ""
 endfunction
 
@@ -195,15 +197,15 @@ function! FittenAcceptable()
 endfunction
 
 if !exists('g:fitten_trigger')
-    let g:fitten_trigger = '<C-l>'
+    let g:fitten_trigger = "\<C-l>"
 endif
 if !exists('g:fitten_accept_key')
-    let g:fitten_accept_key = '<Tab>'
+    let g:fitten_accept_key = "\<Tab>"
 endif
 function! FittenMapping()
-    execute "inoremap" g:fitten_trigger '<Cmd>call CodeCompletion()<CR>'
+    execute "inoremap" keytrans(g:fitten_trigger) '<Cmd>call CodeCompletion()<CR>'
     if g:fitten_accept_key isnot v:none
-        execute 'inoremap' g:fitten_accept_key '<C-r>=FittenAccept()<CR>'
+        execute 'inoremap' keytrans(g:fitten_accept_key) '<C-r>=FittenAccept()<CR>'
     endif
 endfunction
 
