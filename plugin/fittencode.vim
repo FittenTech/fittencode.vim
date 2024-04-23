@@ -83,21 +83,14 @@ function! CodeCompletion()
     call ClearCompletion()
 
     let l:filename = substitute(expand('%'), '\\', '/', 'g')
-
     let l:file_content = join(getline(1, '$'), "\n")
     let l:line_num = line('.')
-    if getcurpos()[2] == getcurpos()[4]
-        let l:col_num = getcurpos()[2]
-    else
-        let l:col_num = getcurpos()[2] + 1
-    endif
-    
+    let l:col_num = col('.')
     let l:prefix = join(getline(1, l:line_num - 1), '\n')
     if !empty(l:prefix)
         let l:prefix = l:prefix . '\n'
     endif
     let l:prefix = l:prefix . strpart(getline(l:line_num), 0, l:col_num - 1)
-    
     let l:suffix = strpart(getline(l:line_num), l:col_num - 1)
     if l:line_num < line('$')
         let l:suffix = l:suffix . '\n' . join(getline(l:line_num + 1, '$'), '\n')
@@ -163,24 +156,51 @@ function! CodeCompletion()
     let b:fitten_suggestion = l:generated_text
 endfunction
 
-function! Accept()
-    echo "Accept"
+let g:fitten_accept_no_echo = 0
+function! FittenAcceptMain()
+    if g:fitten_accept_no_echo == 0
+        echo "Accept"
+    endif
     let default = pumvisible() ? "\<C-N>" : "\t"
 
-    if mode() !~# '^[iR]' || !exists('b:fitten_suggestion')
+    if mode() !~#'^[iR]' || !exists('b:fitten_suggestion')
         return default
     endif
 
     let l:text = b:fitten_suggestion
+	" Remove extra newline characters between lines
+    let l:text = substitute(l:text, "\n\n", "\n", 'g')
+    let l:text = substitute(l:text, "\n$", "", 'g')
 
     call ClearCompletion()
 
     return l:text
 endfunction
 
-function! MapTab()
-    inoremap <C-l> <C-O>:call CodeCompletion()<CR>
-    inoremap <script><silent><nowait><expr> <Tab> Accept()
+function! FittenAccept()
+    let l:oldval = &paste
+    set paste
+    execute "normal i" . FittenAcceptMain()
+    let &paste = l:oldval
+    " Move cursor to the correct position
+    return "\<Right>"
+endfunction
+
+function! FittenAcceptable()
+    return (mode() !~# '^[iR]' || !exists('b:fitten_suggestion')) ? 0 : 1
+endfunction
+
+if !exists('g:fitten_trigger')
+    let g:fitten_trigger = '<C-l>'
+endif
+if !exists('g:fitten_accept_key')
+    let g:fitten_accept_key = '<Tab>'
+endif
+function! FittenMapping()
+    execute "inoremap" g:fitten_trigger '<Cmd>call CodeCompletion()<CR>'
+    if g:fitten_accept_key isnot v:none
+        execute 'inoremap' g:fitten_accept_key '<C-r>=FittenAccept()<CR>'
+    endif
 endfunction
 
 augroup fittencode
@@ -190,6 +210,5 @@ augroup fittencode
     autocmd BufLeave     * call ClearCompletion()
     autocmd ColorScheme,VimEnter * call SetSuggestionStyle()
     " Map tab using vim enter so it occurs after all other sourcing.
-    autocmd VimEnter             * call MapTab()
+    autocmd VimEnter             * call FittenMapping()
 augroup END
-
