@@ -17,7 +17,7 @@ function! SetSuggestionStyle() abort
 endfunction
 
 function! Fittenlogin(account, password)
-    let l:login_url = 'https://codeuser.fittentech.cn:14443/login'
+    let l:login_url = 'https://fc.fittenlab.cn/codeuser/login'
     let l:json_data = '{"username": "' . a:account . '", "password": "' . a:password . '"}'
     let l:login_command = 'curl -s -X POST -H "Content-Type: application/json" -d ' . shellescape(l:json_data) . ' ' . l:login_url
     let l:response = system(l:login_command)
@@ -30,7 +30,7 @@ function! Fittenlogin(account, password)
 
     let l:user_token = l:login_data.data.token
 
-    let l:fico_url = 'https://codeuser.fittentech.cn:14443/get_ft_token'
+    let l:fico_url = 'https://fc.fittenlab.cn/codeuser/get_ft_token'
     let l:fico_command = 'curl -s -H "Authorization: Bearer ' . l:user_token . '" ' . l:fico_url
     let l:fico_response = system(l:fico_command)
     let l:fico_data = json_decode(l:fico_response)
@@ -116,7 +116,7 @@ function! CodeCompletion()
     let l:tempfile = tempname()
     call writefile([l:params], l:tempfile)
 
-    let l:server_addr = 'https://codeapi.fittentech.cn:13443/generate_one_stage/'
+    let l:server_addr = 'https://fc.fittenlab.cn/codeapi/complete/generate_one_stage/'
 
     let l:cmd = 'curl -s -X POST -H "Content-Type: application/json" -d @' . l:tempfile . ' "' . l:server_addr . l:token . '?ide=vim&v=0.2.1"'
     let l:response = system(l:cmd)
