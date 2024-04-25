@@ -116,7 +116,7 @@ function! CodeCompletion()
     let l:tempfile = tempname()
     call writefile([l:params], l:tempfile)
 
-    let l:server_addr = 'https://fc.fittenlab.cn/codeapi/complete/generate_one_stage/'
+    let l:server_addr = 'https://fc.fittenlab.cn/codeapi/completion/generate_one_stage/'
 
     let l:cmd = 'curl -s -X POST -H "Content-Type: application/json" -d @' . l:tempfile . ' "' . l:server_addr . l:token . '?ide=vim&v=0.2.1"'
     let l:response = system(l:cmd)
