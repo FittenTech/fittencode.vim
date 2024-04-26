@@ -1,0 +1,49 @@
+*fittencode.vim.txt*    Fitten Code AI Programming Assistant
+
+==============================================================================
+CONTENTS
+
+    Basic Options                               |fitten-options|
+    Advanced Usage                              |fitten-advanced|
+
+==============================================================================
+BASIC OPTIONS                                   *fitten-options*
+
+*g:fitten_trigger*
+    The key bindings to trigger code completion.
+
+    Default value: `"\<C-l>"`
+
+*g:fitten_accept_key*
+    The key bindings to accept code completion. i.e., call |FittenAccept()|.
+
+    Set to |v:none| to disable the mapping.
+
+    Default value: `"\<Tab>"`
+
+==============================================================================
+ADVANCED USAGE                                  *fitten-advanced*
+
+For advanced users there are functions that you can use in your own mappings:
+
+FittenAcceptable()                              *FittenAcceptable()*
+    Checks if the suggestion can be accepted. i.e., if the return value is 1,
+    then calling function |FittenAccept()| would accept the suggestion.
+
+    Return value: 0 or 1.
+
+FittenAccept()                                  *FittenAccept()*
+    Accept the suggestion. This is done in insert mode, and the return value
+    is of no use.
+
+    NOTE: Should only be used halfway in insert mode, like in >
+        imap <Tab> <C-r>=FittenAccept()<CR>
+<
+    Or like in >
+        imap <Tab> <Cmd>call FittenAccept()<CR>
+<
+
+    Return value: ""
+
+==============================================================================
+ vim:tw=78:ft=help:norl:
