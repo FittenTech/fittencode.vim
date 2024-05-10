@@ -178,8 +178,8 @@ function! FittenAcceptMain()
     return l:text
 endfunction
 
-function! FittenInsert(text, is_add_newline) abort
-    if a:is_add_newline == v:true
+function! FittenInsert(text, is_first_line) abort
+    if a:is_first_line == v:false
         call append('.', '')
         let l:line = line('.') + 1
     else
@@ -194,17 +194,12 @@ endfunction
 
 function FittenAccept()
     let l:accept = FittenAcceptMain()
-    let l:accept_lines = split(l:accept, "\n")
+    let l:accept_lines = split(l:accept, "\n", v:true)
 
-    if strpart(l:accept, 0, 1) ==# "\n"
-        let l:is_add_newline = v:true
-    else
-        let l:is_add_newline = v:false
-    endif
-
+    let l:is_first_line = v:true
     for line in l:accept_lines
-        call FittenInsert(line, l:is_add_newline)
-        let l:is_add_newline = v:true
+        call FittenInsert(line, l:is_first_line)
+        let l:is_first_line = v:false
     endfor
 endfunction
 
