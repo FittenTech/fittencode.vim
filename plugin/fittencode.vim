@@ -178,8 +178,8 @@ function! FittenAcceptMain()
     return l:text
 endfunction
 
-function! FittenInsert(text, is_first_line) abort
-    if a:is_first_line == v:false
+function! FittenInsert(text, is_add_newline) abort
+    if a:is_add_newline == v:true
         call append('.', '')
         let l:line = line('.') + 1
     else
@@ -196,10 +196,15 @@ function FittenAccept()
     let l:accept = FittenAcceptMain()
     let l:accept_lines = split(l:accept, "\n")
 
-    let l:is_first_line = v:true
+    if strpart(l:accept, 0, 1) ==# "\n"
+        let l:is_add_newline = v:true
+    else
+        let l:is_add_newline = v:false
+    endif
+
     for line in l:accept_lines
-        call FittenInsert(line, l:is_first_line)
-        let l:is_first_line = v:false
+        call FittenInsert(line, l:is_add_newline)
+        let l:is_add_newline = v:true
     endfor
 endfunction
 
@@ -216,7 +221,7 @@ endif
 function! FittenMapping()
     execute "inoremap" keytrans(g:fitten_trigger) '<Cmd>call CodeCompletion()<CR>'
     if g:fitten_accept_key isnot v:none
-        execute 'inoremap' keytrans(g:fitten_accept_key) '<Cmd>call FittenAccept()<CR><Right>'
+        execute 'inoremap' keytrans(g:fitten_accept_key) '<Cmd>call FittenAccept()<CR>'
     endif
 endfunction
 
