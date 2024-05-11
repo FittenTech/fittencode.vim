@@ -189,18 +189,29 @@ function! FittenAcceptMain()
     return l:text
 endfunction
 
+function! FittenInsert(text, is_first_line) abort
+    if a:is_first_line == v:false
+        call append('.', '')
+        let l:line = line('.') + 1
+    else
+        let l:line = line('.')
+    endif
+    let l:col = col('.')
+    let l:oldline = getline(l:line)
+    let l:newline = l:oldline[:l:col-2] . a:text . l:oldline[l:col-1:]
+    call setline(l:line, l:newline)
+    call cursor(l:line, l:col + len(a:text))
+endfunction
+
 function FittenAccept()
-    let l:oldval = &paste
+    let l:accept = FittenAcceptMain()
+    let l:accept_lines = split(l:accept, "\n", v:true)
 
-    set paste
-
-    execute "normal i" . FittenAcceptMain()
-
-    let &paste = l:oldval
-
-    unl oldval
-
-    return ""
+    let l:is_first_line = v:true
+    for line in l:accept_lines
+        call FittenInsert(line, l:is_first_line)
+        let l:is_first_line = v:false
+    endfor
 endfunction
 
 function! FittenAcceptable()
@@ -216,7 +227,7 @@ endif
 function! FittenMapping()
     execute "inoremap" keytrans(g:fitten_trigger) '<Cmd>call CodeCompletion()<CR>'
     if g:fitten_accept_key isnot v:none
-        execute 'inoremap' keytrans(g:fitten_accept_key) '<C-r>=FittenAccept()<CR>'
+        execute 'inoremap' keytrans(g:fitten_accept_key) '<Cmd>call FittenAccept()<CR>'
     endif
 endfunction
 
