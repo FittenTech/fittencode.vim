@@ -74,7 +74,7 @@ function! ClearCompletion()
 endfunction
 
 function! ClearCompletionByCursorMoved()
-    if col('.') != col('$')
+    if exists('b:fitten_suggestion')
         call ClearCompletion()
     endif
 endfunction
@@ -138,7 +138,7 @@ function! CodeCompletion()
 
     if empty(l:generated_text)
         echow "Fitten Code: No More Suggestions"
-        call timer_start(2000, {-> execute('echo ""')})
+        call timer_start(1500, {-> execute('echo ""')})
         return
     endif
 
@@ -161,6 +161,17 @@ function! CodeCompletion()
     endfor
 
     let b:fitten_suggestion = l:generated_text
+endfunction
+
+function! CodeAutoCompletion()
+    if col('.') == col('$')
+        call CodeCompletion()
+        return ""
+    endif
+    if empty(substitute(getline('.')[col('.') - 1:], '\s', '', 'g'))
+        call CodeCompletion()
+        return ""
+    endif
 endfunction
 
 function! FittenAcceptMain()
@@ -217,5 +228,7 @@ augroup fittencode
     autocmd ColorScheme,VimEnter * call SetSuggestionStyle()
     " Map tab using vim enter so it occurs after all other sourcing.
     autocmd VimEnter             * call FittenMapping()
+    set updatetime=1500
+    autocmd CursorHoldI  * call CodeAutoCompletion()
 augroup END
 
