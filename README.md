@@ -9,8 +9,9 @@ Fitten Code AI编程助手 Vim 版本，帮助您在vim中通过AI进行自动�
 ## Dependencies
 
 `Vim` >= 9.0.
+`NeoVim` >= 0.8.0.
 
-The support of `NeoVim` is [here](https://github.com/luozhiya/fittencode.nvim) contributed by luozhiya.
+The support of `NeoVim` in Lua is [here](https://github.com/luozhiya/fittencode.nvim) contributed by luozhiya.
 
 ## Install
 
