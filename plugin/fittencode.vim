@@ -201,6 +201,8 @@ function FittenAccept()
         call FittenInsert(line, l:is_first_line)
         let l:is_first_line = v:false
     endfor
+
+    return ""
 endfunction
 
 function! FittenAcceptable()
