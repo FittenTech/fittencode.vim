@@ -5,6 +5,7 @@ if exists("g:loaded_fittencode")
     finish
   endif
 let g:loaded_fittencode = 1
+let g:accept_just_now = 0
 
 let s:hlgroup = 'FittenSuggestion'
 function! SetSuggestionStyle() abort
@@ -74,6 +75,10 @@ function! ClearCompletion()
 endfunction
 
 function! ClearCompletionByCursorMoved()
+    if exists('g:accept_just_now') && g:accept_just_now == 2
+        let g:accept_just_now = 1
+        return
+    endif
     if exists('b:fitten_suggestion')
         call ClearCompletion()
     endif
@@ -164,6 +169,10 @@ function! CodeCompletion()
 endfunction
 
 function! CodeAutoCompletion()
+    if !exists('g:accept_just_now') || g:accept_just_now == 1 || g:accept_just_now == 2
+        let g:accept_just_now = g:accept_just_now - 1
+        return
+    endif
     if col('.') == col('$')
         call CodeCompletion()
         return ""
@@ -204,6 +213,7 @@ function! FittenInsert(text, is_first_line) abort
 endfunction
 
 function FittenAccept()
+    let g:accept_just_now = 2
     let l:accept = FittenAcceptMain()
     let l:accept_lines = split(l:accept, "\n", v:true)
 
