@@ -30,7 +30,7 @@ FittenAcceptable()                              *FittenAcceptable()*
     Checks if the suggestion can be accepted. i.e., if the return value is 1,
     then calling function |FittenAccept()| would accept the suggestion.
 
-    Return value: 0 or 1.
+    Return value: `0` or `1`.
 
 FittenAccept()                                  *FittenAccept()*
     Accept the suggestion. This is done in insert mode, and the return value
@@ -42,8 +42,7 @@ FittenAccept()                                  *FittenAccept()*
     Or like in >
         imap <Tab> <Cmd>call FittenAccept()<CR>
 <
-
-    Return value: ""
+    Return value: `""`
 
 ==============================================================================
  vim:tw=78:ft=help:norl:

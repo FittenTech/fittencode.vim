@@ -26,15 +26,17 @@ curl -o ~/.vim/plugin/fittencode.vim https://gitee.com/fittentech/fittentech.vim
 
 ```
 
+Installing by various Vim plug-in managers should also work.
+
 ## Usage
 
 If you haven't registered yet, please click [here](https://codewebchat.fittentech.cn:15443?ide=vim) to register.
 
-After registration, enter `:Fittenlogin <username> <passwd>` in vim command line to login. After successful login, press `<C-L>` to toggle completion and `<TAB>` to accept the completion. You can also modify the shortcut key binding in the fittencode.vim file to your preferred completion shortcut.
+After registration, enter `:Fittenlogin <username> <passwd>` in vim command line to login. After successful login, press `<C-L>` to toggle completion and `<TAB>` to accept the completion. You can also modify the shortcut key binding by `g:fitten_trigger` and `g:fitten_accept_key` to your preferred completion shortcut.
 
 如果您还没注册，请先点击[这里](https://codewebchat.fittentech.cn:15443?ide=vim)注册。
 
-注册完成后，在vim命令行输入`:Fittenlogin <username> <passwd>`登录；登录成功后，按下`<C-L>`即可弹出补全提示，按下 `<TAB>` 键完成补全，您也可以修改`fittencode.vim`文件的快捷键绑定，改为自己习惯的补全快捷键。
+注册完成后，在vim命令行输入`:Fittenlogin <username> <passwd>`登录；登录成功后，按下`<C-L>`即可弹出补全提示，按下 `<TAB>` 键完成补全，您也可以修改`g:fitten_trigger`和`g:fitten_accept_key`，改为自己习惯的补全快捷键。
 
 ```python
 # Intelligent completion example for input code
@@ -48,3 +50,9 @@ calculate_area(|)
 You can also enter `:Fittenlogout` to log out.
 
 您还可以输入`:Fittenlogout`登出。
+
+For more advanced usage, esp. using your own trigger functions, see `:help fitten-advanced`.
+
+有关更高级的用法，特别是使用您自己的触发器函数，请参阅`:help fitten advanced`。
+
+
