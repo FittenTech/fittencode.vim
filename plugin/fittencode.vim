@@ -94,11 +94,7 @@ function! CodeCompletion()
 
     let l:file_content = join(getline(1, '$'), "\n")
     let l:line_num = line('.')
-    if getcurpos()[2] == getcurpos()[4]
-        let l:col_num = getcurpos()[2]
-    else
-        let l:col_num = getcurpos()[2] + 1
-    endif
+    let l:col_num = getcurpos()[2]
     
     let l:prefix = join(getline(1, l:line_num - 1), '\n')
     if !empty(l:prefix)
@@ -154,6 +150,7 @@ function! CodeCompletion()
     if empty(l:text[-1])
         call remove(l:text, -1)
     endif
+    let l:text = map(l:text, 'substitute(v:val, "\t", repeat(" ", &ts), "g")')
 
     let l:is_first_line = v:true
     for line in text
