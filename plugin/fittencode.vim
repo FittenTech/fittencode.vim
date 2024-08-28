@@ -45,6 +45,7 @@ function! Fittenlogin(account, password)
     call writefile([l:apikey], $HOME . '/.vimapikey')
 
     echo "Login successful, API key saved"
+    let g:fitten_login_status = 1
 endfunction
 
 command! -nargs=+ Fittenlogin call Fittenlogin(<f-args>)
@@ -64,8 +65,10 @@ command! Fittenlogout call Fittenlogout()
 function! CheckLoginStatus()
     if filereadable($HOME . '/.vimapikey')
         echo "Logged in"
+        return 1
     else
         echo "Not logged in"
+        return 0
     endif
 endfunction
 
@@ -169,6 +172,8 @@ function! CodeCompletion()
 endfunction
 
 function! CodeAutoCompletion()
+    if g:fitten_login_status == 0
+        return
     if !exists('g:accept_just_now') || g:accept_just_now == 1 || g:accept_just_now == 2
         let g:accept_just_now = g:accept_just_now - 1
         return
@@ -235,6 +240,9 @@ if !exists('g:fitten_trigger')
 endif
 if !exists('g:fitten_accept_key')
     let g:fitten_accept_key = "\<Tab>"
+endif
+if !exists('g:fitten_login_status')
+    let g:fitten_login_status = CheckLoginStatus()
 endif
 function! FittenMapping()
     execute "inoremap" keytrans(g:fitten_trigger) '<Cmd>call CodeCompletion()<CR>'
