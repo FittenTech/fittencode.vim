@@ -64,10 +64,10 @@ command! Fittenlogout call Fittenlogout()
 
 function! CheckLoginStatus()
     if filereadable($HOME . '/.vimapikey')
-        echo "Logged in"
+"        echo "Logged in"
         return 1
     else
-        echo "Not logged in"
+"        echo "Not logged in"
         return 0
     endif
 endfunction
@@ -170,10 +170,11 @@ endfunction
 
 function! CodeAutoCompletion()
     if g:fitten_login_status == 0
-        return
+        return ""
+    endif
     if !exists('g:accept_just_now') || g:accept_just_now == 1 || g:accept_just_now == 2
         let g:accept_just_now = g:accept_just_now - 1
-        return
+        return ""
     endif
     if col('.') == col('$')
         call CodeCompletion()
