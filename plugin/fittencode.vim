@@ -80,7 +80,6 @@ endfunction
 function! ClearCompletionByCursorMoved()
     if exists('g:accept_just_now') && g:accept_just_now == 2
         let g:accept_just_now = 1
-        return
     endif
     if exists('b:fitten_suggestion')
         call ClearCompletion()
