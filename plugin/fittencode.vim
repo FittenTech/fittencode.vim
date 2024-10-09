@@ -71,12 +71,7 @@ endfunction
 function! ClearCompletion()
     unlet! b:fitten_suggestion
     call prop_remove({'type': s:hlgroup, 'all': v:true})
-endfunction
-
-function! ClearCompletionByCursorMoved()
-    if col('.') != col('$')
-        call ClearCompletion()
-    endif
+    redraw!
 endfunction
 
 function! CodeCompletion()
@@ -223,7 +218,7 @@ endfunction
 
 augroup fittencode
     autocmd!
-    autocmd CursorMovedI * call ClearCompletionByCursorMoved()
+    autocmd CursorMovedI * call ClearCompletion()
     autocmd InsertLeave  * call ClearCompletion()
     autocmd BufLeave     * call ClearCompletion()
     autocmd ColorScheme,VimEnter * call SetSuggestionStyle()
