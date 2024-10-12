@@ -71,12 +71,7 @@ endfunction
 function! ClearCompletion()
     unlet! b:fitten_suggestion
     call prop_remove({'type': s:hlgroup, 'all': v:true})
-endfunction
-
-function! ClearCompletionByCursorMoved()
-    if col('.') != col('$')
-        call ClearCompletion()
-    endif
+    redraw!
 endfunction
 
 function! CodeCompletion()
@@ -184,7 +179,9 @@ function! FittenInsert(text, is_first_line) abort
     endif
     let l:col = col('.')
     let l:oldline = getline(l:line)
-    let l:newline = l:oldline[:l:col-2] . a:text . l:oldline[l:col-1:]
+    let l:prefix = strpart(l:oldline, 0, l:col-1)
+    let l:suffix = strpart(l:oldline, l:col-1)
+    let l:newline = l:prefix . a:text . l:suffix
     call setline(l:line, l:newline)
     call cursor(l:line, l:col + len(a:text))
 endfunction
@@ -221,7 +218,7 @@ endfunction
 
 augroup fittencode
     autocmd!
-    autocmd CursorMovedI * call ClearCompletionByCursorMoved()
+    autocmd CursorMovedI * call ClearCompletion()
     autocmd InsertLeave  * call ClearCompletion()
     autocmd BufLeave     * call ClearCompletion()
     autocmd ColorScheme,VimEnter * call SetSuggestionStyle()
