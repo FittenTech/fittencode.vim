@@ -5,6 +5,7 @@ if exists("g:loaded_fittencode")
     finish
   endif
 let g:loaded_fittencode = 1
+let g:accept_just_now = 0
 
 let s:hlgroup = 'FittenSuggestion'
 function! SetSuggestionStyle() abort
@@ -46,6 +47,7 @@ function! Fittenlogin(account, password)
     call writefile([l:apikey], $HOME . '/.vimapikey')
 
     echo "Login successful, API key saved"
+    let g:fitten_login_status = 1
 endfunction
 
 command! -nargs=+ Fittenlogin call Fittenlogin(<f-args>)
@@ -64,16 +66,26 @@ command! Fittenlogout call Fittenlogout()
 
 function! CheckLoginStatus()
     if filereadable($HOME . '/.vimapikey')
-        echo "Logged in"
+"        echo "Logged in"
+        return 1
     else
-        echo "Not logged in"
+"        echo "Not logged in"
+        return 0
     endif
 endfunction
 
 function! ClearCompletion()
     unlet! b:fitten_suggestion
     call prop_remove({'type': s:hlgroup, 'all': v:true})
-    redraw!
+endfunction
+
+function! ClearCompletionByCursorMoved()
+    if exists('g:accept_just_now') && g:accept_just_now == 2
+        let g:accept_just_now = 1
+    endif
+    if exists('b:fitten_suggestion')
+        call ClearCompletion()
+    endif
 endfunction
 
 function! CodeCompletion()
@@ -131,7 +143,7 @@ function! CodeCompletion()
 
     if empty(l:generated_text)
         echow "Fitten Code: No More Suggestions"
-        call timer_start(2000, {-> execute('echo ""')})
+        call timer_start(1500, {-> execute('echo ""')})
         return
     endif
 
@@ -155,6 +167,24 @@ function! CodeCompletion()
     endfor
 
     let b:fitten_suggestion = l:generated_text
+endfunction
+
+function! CodeAutoCompletion()
+    if g:fitten_login_status == 0
+        return ""
+    endif
+    if !exists('g:accept_just_now') || g:accept_just_now == 1 || g:accept_just_now == 2
+        let g:accept_just_now = g:accept_just_now - 1
+        return ""
+    endif
+    if col('.') == col('$')
+        call CodeCompletion()
+        return ""
+    endif
+    if empty(substitute(getline('.')[col('.') - 1:], '\s', '', 'g'))
+        call CodeCompletion()
+        return ""
+    endif
 endfunction
 
 function! FittenAcceptMain()
@@ -189,6 +219,7 @@ function! FittenInsert(text, is_first_line) abort
 endfunction
 
 function FittenAccept()
+    let g:accept_just_now = 2
     let l:accept = FittenAcceptMain()
     let l:accept_lines = split(l:accept, "\n", v:true)
 
@@ -211,6 +242,9 @@ endif
 if !exists('g:fitten_accept_key')
     let g:fitten_accept_key = "\<Tab>"
 endif
+if !exists('g:fitten_login_status')
+    let g:fitten_login_status = CheckLoginStatus()
+endif
 function! FittenMapping()
     execute "inoremap" keytrans(g:fitten_trigger) '<Cmd>call CodeCompletion()<CR>'
     if g:fitten_accept_key isnot v:none
@@ -220,11 +254,13 @@ endfunction
 
 augroup fittencode
     autocmd!
-    autocmd CursorMovedI * call ClearCompletion()
+    autocmd CursorMovedI * call ClearCompletionByCursorMoved()
     autocmd InsertLeave  * call ClearCompletion()
     autocmd BufLeave     * call ClearCompletion()
     autocmd ColorScheme,VimEnter * call SetSuggestionStyle()
     " Map tab using vim enter so it occurs after all other sourcing.
     autocmd VimEnter             * call FittenMapping()
+    set updatetime=1500
+    autocmd CursorHoldI  * call CodeAutoCompletion()
 augroup END
 
