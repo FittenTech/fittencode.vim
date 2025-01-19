@@ -9,11 +9,13 @@ let g:loaded_fittencode = 1
 let s:hlgroup = 'FittenSuggestion'
 function! SetSuggestionStyle() abort
     if &t_Co == 256
-        hi def FittenSuggestion guifg=#808080 ctermfg=244
+        hi FittenSuggestion guifg=#808080 ctermfg=244
     else
-        hi def FittenSuggestion guifg=#808080 ctermfg=8
+        hi FittenSuggestion guifg=#808080 ctermfg=8
     endif
-    call prop_type_add(s:hlgroup, {'highlight': s:hlgroup})
+    if empty(prop_type_get(s:hlgroup))
+        call prop_type_add(s:hlgroup, {'highlight': s:hlgroup})
+    endif
 endfunction
 
 function! Fittenlogin(account, password)
