@@ -19,6 +19,8 @@ function! SetSuggestionStyle() abort
     endif
 endfunction
 
+let g:fitten_auto_completion = 0
+
 function! Fittenlogin(account, password)
     let l:login_url = 'https://fc.fittenlab.cn/codeuser/login'
     let l:json_data = '{"username": "' . a:account . '", "password": "' . a:password . '"}'
@@ -252,6 +254,10 @@ function! FittenMapping()
     endif
 endfunction
 
+command! FittenAutoCompletionOn let g:fitten_auto_completion = 1 | echo 'Fitten Code Auto Completion Enabled'
+
+command! FittenAutoCompletionOff let g:fitten_auto_completion = 0 | echo 'Fitten Code Auto Completion Disabled'
+
 augroup fittencode
     autocmd!
     autocmd CursorMovedI * call ClearCompletionByCursorMoved()
@@ -261,6 +267,5 @@ augroup fittencode
     " Map tab using vim enter so it occurs after all other sourcing.
     autocmd VimEnter             * call FittenMapping()
     set updatetime=1500
-    autocmd CursorHoldI  * call CodeAutoCompletion()
+    autocmd CursorHoldI  * if g:fitten_auto_completion == 1 | call CodeAutoCompletion() | endif
 augroup END
-
