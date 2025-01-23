@@ -47,6 +47,10 @@ def calculate_area(radius):
 calculate_area(|)
 ```
 
+Use `:FittenAutoCompletionOn` or `:FittenAutoCompletionOff` to enable/disable the auto completion feature.
+
+使用 `:FittenAutoCompletionOn` 或 `:FittenAutoCompletionOff`开启/关闭自动补全功能。
+
 You can also enter `:Fittenlogout` to log out.
 
 您还可以输入`:Fittenlogout`登出。
