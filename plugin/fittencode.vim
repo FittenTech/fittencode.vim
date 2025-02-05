@@ -77,8 +77,10 @@ function! CheckLoginStatus()
 endfunction
 
 function! ClearCompletion()
-    unlet! b:fitten_suggestion
-    call prop_remove({'type': s:hlgroup, 'all': v:true})
+    if exists('b:fitten_suggestion')
+        unlet! b:fitten_suggestion
+        call prop_remove({'type': s:hlgroup, 'all': v:true})
+    endif
 endfunction
 
 function! ClearCompletionByCursorMoved()
