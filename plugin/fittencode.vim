@@ -100,13 +100,13 @@ function! CodeCompletion()
     let l:file_content = join(getline(1, '$'), "\n")
     let l:line_num = line('.')
     let l:col_num = getcurpos()[2]
-    
+
     let l:prefix = join(getline(1, l:line_num - 1), '\n')
     if !empty(l:prefix)
         let l:prefix = l:prefix . '\n'
     endif
     let l:prefix = l:prefix . strpart(getline(l:line_num), 0, l:col_num - 1)
-    
+
     let l:suffix = strpart(getline(l:line_num), l:col_num - 1)
     if l:line_num < line('$')
         let l:suffix = l:suffix . '\n' . join(getline(l:line_num + 1, '$'), '\n')
@@ -121,7 +121,7 @@ function! CodeCompletion()
     let l:token = join(readfile($HOME . '/.vimapikey'), "\n")
 
     let l:params = '{"inputs": "' . l:escaped_prompt . '", "meta_datas": {"filename": "' . l:filename . '"}}'
-    
+
     let l:tempfile = tempname()
     call writefile([l:params], l:tempfile)
 
