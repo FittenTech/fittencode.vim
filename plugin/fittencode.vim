@@ -8,6 +8,13 @@ let g:loaded_fittencode = 1
 let g:accept_just_now = 0
 
 let s:hlgroup = 'FittenSuggestion'
+" 新增：追踪当前活跃的虚拟文本信息
+let g:active_fitten_virt = {
+    \ 'line': -1,
+    \ 'col': -1,
+    \ 'text': '',
+    \ 'total_text': ''
+\ }
 function! SetSuggestionStyle() abort
     if &t_Co == 256
         hi FittenSuggestion guifg=#808080 ctermfg=244
@@ -81,6 +88,12 @@ function! ClearCompletion()
         unlet! b:fitten_suggestion
         call prop_remove({'type': s:hlgroup, 'all': v:true})
     endif
+	if exists('s:job') && job_status(s:job) == 'run'
+		call job_stop(s:job)
+        unlet! s:job
+	endif
+    " 新增：重置虚拟文本追踪变量
+    let g:active_fitten_virt = {'line': -1, 'col': -1, 'text': '', 'total_text': ''}
 endfunction
 
 function! ClearCompletionByCursorMoved()
@@ -128,15 +141,24 @@ function! CodeCompletion()
     let l:server_addr = 'https://fc.fittenlab.cn/codeapi/completion/generate_one_stage/'
 
     let l:cmd = 'curl -s -X POST -H "Content-Type: application/json" -d @' . l:tempfile . ' "' . l:server_addr . l:token . '?ide=vim&v=0.2.1"'
-    let l:response = system(l:cmd)
+    "let l:response = system(l:cmd)
 
-    call delete(l:tempfile)
+    let result = []
+    let s:job = job_start(cmd, {
+                \ 'out_mode': 'raw',
+                \ 'out_cb': { channel, data -> add(result, data) },
+                \ 'exit_cb': { job, status -> s:OnExit(result, status, tempfile, col_num) }
+                \ })
 
-    if v:shell_error
-        echow "Request failed"
+endfunction
+
+fu s:OnExit(out, status, tempfile, col_num) abort
+    call delete(a:tempfile)
+    if a:status != 0
         return
     endif
-    let l:completion_data = json_decode(l:response)
+
+    let l:completion_data = json_decode(join(a:out, "\n"))
 
     if !has_key(l:completion_data, 'generated_text')
         return
@@ -158,19 +180,91 @@ function! CodeCompletion()
     let l:text = map(l:text, 'substitute(v:val, "\t", repeat(" ", &ts), "g")')
 
     let l:is_first_line = v:true
+    " 新增：记录完整的补全文本，用于后续匹配
+    let g:active_fitten_virt.total_text = join(l:text, "\n")
+    let g:active_fitten_virt.line = line('.')
+    let g:active_fitten_virt.col = a:col_num
+    let g:active_fitten_virt.text = g:active_fitten_virt.total_text
     for line in text
         if empty(line)
             let line = " "
         endif
         if l:is_first_line is v:true
             let l:is_first_line = v:false
-            call prop_add(line('.'), l:col_num, {'type': s:hlgroup, 'text': line})
+            call prop_add(line('.'), a:col_num, {'type': s:hlgroup, 'text': line})
         else
             call prop_add(line('.'), 0, {'type': s:hlgroup, 'text_align': 'below', 'text': line})
         endif
     endfor
 
     let b:fitten_suggestion = l:generated_text
+endf
+
+" 新增：处理输入与虚拟文本的匹配逻辑
+function! HandleFittenVirtMatch() abort
+    " 无活跃虚拟文本或无补全内容时直接返回
+    if !exists('g:active_fitten_virt') || g:active_fitten_virt.line == -1 || !exists('b:fitten_suggestion')
+        return
+    endif
+    let l:virt_line = g:active_fitten_virt.line
+    let l:virt_col = g:active_fitten_virt.col
+    let l:total_virt_text = g:active_fitten_virt.total_text
+    " 光标不在虚拟文本所在行，直接清除
+    if line('.') != l:virt_line
+        call ClearCompletion()
+        let g:active_fitten_virt = {'line': -1, 'col': -1, 'text': '', 'total_text': ''}
+        return
+    endif
+    " 获取用户输入的文本（虚拟文本起始列到当前光标前）
+    let l:current_col = getcurpos()[2]
+    if l:current_col < l:virt_col
+        call ClearCompletion()
+        let g:active_fitten_virt = {'line': -1, 'col': -1, 'text': '', 'total_text': ''}
+        return
+    endif
+    let l:input_text = strpart(getline('.') , l:virt_col - 1, l:current_col - l:virt_col)
+    let l:input_len = len(l:input_text)
+    let l:virt_len = len(l:total_virt_text)
+    " 输入长度超过虚拟文本长度，直接清除
+    if l:input_len > l:virt_len
+        call ClearCompletion()
+        let g:active_fitten_virt = {'line': -1, 'col': -1, 'text': '', 'total_text': ''}
+        return
+    endif
+    " 提取虚拟文本前缀进行匹配（区分大小写）
+    let l:virt_prefix = strpart(l:total_virt_text, 0, l:input_len)
+    if l:input_text ==# l:virt_prefix
+        " 匹配成功：清除旧虚拟文本，显示剩余部分
+        let l:remaining_text = strpart(l:total_virt_text, l:input_len)
+        if empty(l:remaining_text)
+            call ClearCompletion()
+            let g:active_fitten_virt = {'line': -1, 'col': -1, 'text': '', 'total_text': ''}
+            return
+        endif
+        call ClearCompletion()
+        " 重新创建剩余部分的虚拟文本
+        let l:text_lines = split(l:remaining_text, "\n", 1)
+        let l:is_first_line = v:true
+        for line in l:text_lines
+            if empty(line)
+                let line = " "
+            endif
+            if l:is_first_line
+                call prop_add(line('.'), l:current_col, {'type': s:hlgroup, 'text': line})
+                let l:is_first_line = v:false
+            else
+                call prop_add(line('.'), 0, {'type': s:hlgroup, 'text_align': 'below', 'text': line})
+            endif
+        endfor
+        " 更新虚拟文本追踪信息
+        let g:active_fitten_virt.text = l:remaining_text
+        let g:active_fitten_virt.col = l:current_col
+        let b:fitten_suggestion = l:remaining_text
+    else
+        " 匹配失败：清除虚拟文本
+        call ClearCompletion()
+        let g:active_fitten_virt = {'line': -1, 'col': -1, 'text': '', 'total_text': ''}
+    endif
 endfunction
 
 function! CodeAutoCompletion()
@@ -270,4 +364,8 @@ augroup fittencode
     autocmd VimEnter             * call FittenMapping()
     set updatetime=1500
     autocmd CursorHoldI  * if g:fitten_auto_completion == 1 | call CodeAutoCompletion() | endif
+    " 新增：插入字符时触发匹配逻辑
+    autocmd InsertCharPre * call HandleFittenVirtMatch()
+    " 新增：插入模式文本变化时触发（处理删除、粘贴等场景）
+    autocmd TextChangedI * call HandleFittenVirtMatch()
 augroup END
