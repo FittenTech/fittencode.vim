@@ -180,6 +180,16 @@ fu s:OnExit(out, status, tempfile, col_num) abort
     endif
     let l:text = map(l:text, 'substitute(v:val, "\t", repeat(" ", &ts), "g")')
 
+    let b:fitten_suggestion = l:generated_text
+    let s:virtual_text_updated = 0
+    let s:virtual_text_line = line('.')
+    let s:virtual_text_start_col = a:col_num
+
+    if a:col_num != getcurpos()[2]
+		call s:UpdateVirtualTextOnInput()
+		return
+	endif
+
     let l:is_first_line = v:true
     for line in text
         if empty(line)
@@ -192,11 +202,6 @@ fu s:OnExit(out, status, tempfile, col_num) abort
             call prop_add(line('.'), 0, {'type': s:hlgroup, 'text_align': 'below', 'text': line})
         endif
     endfor
-
-    let b:fitten_suggestion = l:generated_text
-    let s:virtual_text_updated = 0
-    let s:virtual_text_line = line('.')
-    let s:virtual_text_start_col = a:col_num
 endf
 
 function! s:UpdateVirtualTextOnInput() abort
