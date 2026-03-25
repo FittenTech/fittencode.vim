@@ -275,10 +275,9 @@ endfunction
 
 function! FittenAcceptMain()
     echo "Accept"
-    let default = pumvisible() ? "\<C-N>" : "\t"
 
     if mode() !~# '^[iR]' || !exists('b:fitten_suggestion')
-        return g:fitten_accept_key == "\t" ? default : g:fitten_accept_key
+        return ''
     endif
 
     let l:text = b:fitten_suggestion
@@ -306,16 +305,21 @@ endfunction
 
 function FittenAccept()
     let g:accept_just_now = 2
-    let l:accept = FittenAcceptMain()
-    let l:accept_lines = split(l:accept, "\n", v:true)
 
+    let l:accept = FittenAcceptMain()
+    if empty(l:accept)
+        let l:feed = pumvisible() ? "\<C-N>" : "\<Tab>"
+        let l:feed = g:fitten_accept_key == '\t' ? l:feed : g:fitten_accept_key
+        call feedkeys(l:feed, 'n')
+        return
+    endif
+
+    let l:accept_lines = split(l:accept, "\n", v:true)
     let l:is_first_line = v:true
     for line in l:accept_lines
         call FittenInsert(line, l:is_first_line)
         let l:is_first_line = v:false
     endfor
-
-    return ""
 endfunction
 
 function! FittenAcceptable()
