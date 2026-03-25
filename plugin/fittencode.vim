@@ -8,6 +8,9 @@ let g:loaded_fittencode = 1
 let g:accept_just_now = 0
 
 let s:hlgroup = 'FittenSuggestion'
+let s:virtual_text_line = 0
+let s:virtual_text_start_col = 0
+let s:virtual_text_updated = 0
 function! SetSuggestionStyle() abort
     if &t_Co == 256
         hi FittenSuggestion guifg=#808080 ctermfg=244
@@ -76,10 +79,18 @@ function! CheckLoginStatus()
     endif
 endfunction
 
-function! ClearCompletion()
-    if exists('b:fitten_suggestion')
-        unlet! b:fitten_suggestion
-        call prop_remove({'type': s:hlgroup, 'all': v:true})
+function! ClearCompletion(clear_state=1)
+    call prop_remove({'type': s:hlgroup, 'all': v:true})
+    if a:clear_state == 1
+        if exists('b:fitten_suggestion')
+            unlet! b:fitten_suggestion
+        endif
+        if exists('s:job') && job_status(s:job) == 'run'
+            call job_stop(s:job)
+            unlet! s:job
+        endif
+        let s:virtual_text_line = 0
+        let s:virtual_text_start_col = 0
     endif
 endfunction
 
@@ -87,12 +98,15 @@ function! ClearCompletionByCursorMoved()
     if exists('g:accept_just_now') && g:accept_just_now == 2
         let g:accept_just_now = 1
     endif
-    if exists('b:fitten_suggestion')
-        call ClearCompletion()
+    if exists('b:fitten_suggestion') && !s:virtual_text_updated
+        call ClearCompletion(0)
     endif
 endfunction
 
 function! CodeCompletion()
+    if exists('b:fitten_suggestion') && s:virtual_text_line == line('.')
+        return
+    endif
     call ClearCompletion()
 
     let l:filename = substitute(expand('%'), '\\', '/', 'g')
@@ -128,15 +142,24 @@ function! CodeCompletion()
     let l:server_addr = 'https://fc.fittenlab.cn/codeapi/completion/generate_one_stage/'
 
     let l:cmd = 'curl -s -X POST -H "Content-Type: application/json" -d @' . l:tempfile . ' "' . l:server_addr . l:token . '?ide=vim&v=0.2.1"'
-    let l:response = system(l:cmd)
+    "let l:response = system(l:cmd)
 
-    call delete(l:tempfile)
+    let result = []
+    let s:job = job_start(l:cmd, {
+                \ 'out_mode': 'raw',
+                \ 'out_cb': { channel, data -> add(result, data) },
+                \ 'exit_cb': { job, status -> s:OnExit(result, status, tempfile, col_num) }
+                \ })
 
-    if v:shell_error
-        echow "Request failed"
+endfunction
+
+fu s:OnExit(out, status, tempfile, col_num) abort
+    call delete(a:tempfile)
+    if a:status != 0
         return
     endif
-    let l:completion_data = json_decode(l:response)
+
+    let l:completion_data = json_decode(join(a:out, "\n"))
 
     if !has_key(l:completion_data, 'generated_text')
         return
@@ -157,6 +180,16 @@ function! CodeCompletion()
     endif
     let l:text = map(l:text, 'substitute(v:val, "\t", repeat(" ", &ts), "g")')
 
+    let b:fitten_suggestion = l:generated_text
+    let s:virtual_text_updated = 0
+    let s:virtual_text_line = line('.')
+    let s:virtual_text_start_col = a:col_num
+
+    if a:col_num != getcurpos()[2]
+		call s:UpdateVirtualTextOnInput()
+		return
+	endif
+
     let l:is_first_line = v:true
     for line in text
         if empty(line)
@@ -164,13 +197,62 @@ function! CodeCompletion()
         endif
         if l:is_first_line is v:true
             let l:is_first_line = v:false
-            call prop_add(line('.'), l:col_num, {'type': s:hlgroup, 'text': line})
+            call prop_add(line('.'), a:col_num, {'type': s:hlgroup, 'text': line})
         else
             call prop_add(line('.'), 0, {'type': s:hlgroup, 'text_align': 'below', 'text': line})
         endif
     endfor
+endf
 
-    let b:fitten_suggestion = l:generated_text
+function! s:UpdateVirtualTextOnInput() abort
+    if !exists('b:fitten_suggestion') 
+        \ || s:virtual_text_line != line('.')
+        return 0
+    endif
+    if s:virtual_text_start_col > getcurpos()[2]
+        call ClearCompletion()
+        return 0
+    endif
+    let l:cur_col = getcurpos()[2]
+    let l:line_content = getline('.')
+    let l:input_content = strpart(l:line_content, s:virtual_text_start_col - 1, l:cur_col - s:virtual_text_start_col)
+    let l:input_len = len(l:input_content)
+
+    if l:input_len == 0
+        return 0
+    endif
+    let l:virtual_prefix = strpart(b:fitten_suggestion, 0, l:input_len)
+    if l:virtual_prefix !=? l:input_content
+        call ClearCompletion()
+        return 0
+    endif
+    let l:remaining_text = strpart(b:fitten_suggestion, l:input_len)
+    if empty(l:remaining_text)
+        call ClearCompletion()
+        return 1
+    endif
+    call ClearCompletion(0)
+    let l:text_lines = split(l:remaining_text, "\n", 1)
+    if empty(l:text_lines[-1])
+        call remove(l:text_lines, -1)
+    endif
+    let l:text_lines = map(l:text_lines, 'substitute(v:val, "\t", repeat(" ", &ts), "g")')
+    let l:is_first_line = v:true
+    for line in l:text_lines
+        if empty(line)
+            let line = " "
+        endif
+        if l:is_first_line
+            let l:is_first_line = v:false
+            call prop_add(line('.'), l:cur_col, {'type': s:hlgroup, 'text': line})
+        else
+            call prop_add(line('.'), 0, {'type': s:hlgroup, 'text_align': 'below', 'text': line})
+        endif
+    endfor
+    let b:fitten_suggestion = l:remaining_text
+    let s:virtual_text_updated = 1
+    let s:virtual_text_start_col = l:cur_col
+    return 1
 endfunction
 
 function! CodeAutoCompletion()
@@ -270,4 +352,5 @@ augroup fittencode
     autocmd VimEnter             * call FittenMapping()
     set updatetime=1500
     autocmd CursorHoldI  * if g:fitten_auto_completion == 1 | call CodeAutoCompletion() | endif
+    autocmd TextChangedI * call s:UpdateVirtualTextOnInput()
 augroup END
