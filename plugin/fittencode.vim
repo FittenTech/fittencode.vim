@@ -263,14 +263,8 @@ function! CodeAutoCompletion()
         let g:accept_just_now = g:accept_just_now - 1
         return ""
     endif
-    if col('.') == col('$')
-        call CodeCompletion()
-        return ""
-    endif
-    if empty(substitute(getline('.')[col('.') - 1:], '\s', '', 'g'))
-        call CodeCompletion()
-        return ""
-    endif
+    call CodeCompletion()
+    return ""
 endfunction
 
 function! FittenAcceptMain()
